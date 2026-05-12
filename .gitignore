@@ -1,6 +1,4 @@
-# ----------------------------
 # Python
-# ----------------------------
 __pycache__/
 *.pyc
 *.pyo
@@ -9,44 +7,25 @@ __pycache__/
 venv/
 pocenv/
 
-# ----------------------------
-# ML / AI Models (DO NOT PUSH)
-# ----------------------------
-all-mini-lm-v6/
-faster-whisper/
-faster-whisper-master/
-mistral/
-models/
-piper/
-vits/
-tacotron2-DDC/
+# Flutter / Dart
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.pub-cache/
+build/
 
-# ----------------------------
-# Large files
-# ----------------------------
-*.bin
-*.pt
-*.pth
-*.onnx
-*.gguf
-*.zip
+# Android
+android/.gradle/
+android/.idea/
+android/app/build/
+android/local.properties
 
-# ----------------------------
-# IDE / OS
-# ----------------------------
+# iOS
+ios/Pods/
+ios/Runner.xcworkspace/
+
+# OS / IDE
 .idea/
 .vscode/
 .DS_Store
-
-# ----------------------------
-# Streamlit / Cache
-# ----------------------------
-.streamlit/
-cache/
-
-# ----------------------------
-# Flutter
-# ----------------------------
-myapp/build/
-myapp/.dart_tool/
-myapp/.idea/
+Thumbs.db
