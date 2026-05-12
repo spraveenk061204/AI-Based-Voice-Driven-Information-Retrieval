@@ -1,0 +1,52 @@
+# ----------------------------
+# Python
+# ----------------------------
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.env
+venv/
+pocenv/
+
+# ----------------------------
+# ML / AI Models (DO NOT PUSH)
+# ----------------------------
+all-mini-lm-v6/
+faster-whisper/
+faster-whisper-master/
+mistral/
+models/
+piper/
+vits/
+tacotron2-DDC/
+
+# ----------------------------
+# Large files
+# ----------------------------
+*.bin
+*.pt
+*.pth
+*.onnx
+*.gguf
+*.zip
+
+# ----------------------------
+# IDE / OS
+# ----------------------------
+.idea/
+.vscode/
+.DS_Store
+
+# ----------------------------
+# Streamlit / Cache
+# ----------------------------
+.streamlit/
+cache/
+
+# ----------------------------
+# Flutter
+# ----------------------------
+myapp/build/
+myapp/.dart_tool/
+myapp/.idea/
