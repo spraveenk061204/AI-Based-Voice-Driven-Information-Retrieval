@@ -1,4 +1,6 @@
 # rag/rag_pipeline.py
+import os
+
 from rag.rag_chunker import Chunker
 from rag.document_loader import DocLoader
 from rag.embeder import Embeder
@@ -14,25 +16,57 @@ WEB_URLS = [
 
 MODEL_PATH = r"C:\Users\s.praveenk\Documents\Projects\Poc-AI Based Voice retrieval\all-mini-lm-v6"
 
-
+VECTOR_PATH = "backend/data/vector_store"
 class RAGpipeline:
+    
     def __init__(self):
-        self.dl = DocLoader()
-        self.chunker = Chunker(chunk_size=500, chunk_overlap=100)
-        self.embedder = Embeder(MODEL_PATH)
+            self.dl = DocLoader()
+            self.chunker = Chunker(500, 100)
+            self.embedder = Embeder(MODEL_PATH)
 
-        # ✅ Build vector store ONCE
-        self.vector_store = self._build_vector_store()
+            if os.path.exists(f"{VECTOR_PATH}/faiss.index"):
+                print("[RAG] Loading vector store...")
+                self.vector_store = VectorStore.load(VECTOR_PATH)
+            else:
+                print("[RAG] Building vector store...")
+                self.vector_store = self._build_vector_store()
 
     def _build_vector_store(self):
+        documents = []
+
+        # Load PDF
+        pdf_docs = self.dl.loadPDF(PDF_PATH)
+        for doc in pdf_docs:
+            doc.metadata["source_type"] = "pdf"
+
+        # Load DOC
+        docx_docs = self.dl.loadDoc(DOC_PATH)
+        for doc in docx_docs:
+            doc.metadata["source_type"] = "doc"
+
+        documents.extend(pdf_docs)
+        documents.extend(docx_docs)
+
+        print(f"[RAG] Loaded PDF: {len(pdf_docs)}, DOC: {len(docx_docs)}")
+
+        chunks = self.chunker.chunk_documents(documents)
+
+        embeddings = self.embedder.embed_chunks(chunks)
+
+        vector_store = VectorStore(len(embeddings[0]))
+        vector_store.add_embeddings(embeddings, chunks)
+
+        # ✅ Save once
+        vector_store.save("backend/data/vector_store")
+
+        return vector_store
+    '''def _build_vector_store(self):
         """
         Load ALL sources, chunk, embed, and store in one vector DB.
         """
         documents = []
 
-        # ✅ Load all sources
-        documents.extend(self.dl.loadPDF(PDF_PATH))
-        documents.extend(self.dl.loadDoc(DOC_PATH))
+    
         documents.extend(self.dl.loadWeb(WEB_URLS))
 
         print(f"[RAG] Total documents loaded: {len(documents)}")
@@ -49,7 +83,7 @@ class RAGpipeline:
         vector_store.add_embeddings(embeddings, chunks)
 
         print("[RAG] Unified vector store ready")
-        return vector_store
+        return vector_store'''
 
     def retrieve(self, query_text, top_k=3):
         """

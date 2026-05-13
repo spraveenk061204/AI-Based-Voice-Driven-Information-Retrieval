@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import '../../services/audio_player_service.dart';
 import '../../services/audio_recorder_service.dart';
 import '../../services/backend_service.dart';
 import '../../models/voice_message.dart';
@@ -20,6 +21,8 @@ class _VoiceMicState extends State<VoiceMic> with SingleTickerProviderStateMixin
   AnimationController(vsync: this, duration: const Duration(seconds: 2))
     ..repeat();
   final AudioRecorderService recorder = AudioRecorderService();
+  final AudioPlayerService player = AudioPlayerService();
+
   final BackendService backend = BackendService();
   bool isRecording = false;
   @override
@@ -95,9 +98,10 @@ class _VoiceMicState extends State<VoiceMic> with SingleTickerProviderStateMixin
                     );
 
                     /// 2️⃣ Send to backend
+
                     final responsePath = await backend.sendAudio(File(path));
 
-                    /// 3️⃣ Add assistant voice bubble
+                    /// ✅ Add assistant message FIRST
                     widget.controller.addMessage(
                       VoiceMessage(
                         audioPath: responsePath,
@@ -105,6 +109,10 @@ class _VoiceMicState extends State<VoiceMic> with SingleTickerProviderStateMixin
                         sender: Sender.assistant,
                       ),
                     );
+
+                    /// ✅ THEN play audio automatically
+                    await player.play(responsePath);
+
                   }
                 },
                 child: Container(

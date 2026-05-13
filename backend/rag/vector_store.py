@@ -1,3 +1,6 @@
+import os
+import pickle
+
 import faiss
 import numpy as np
 from typing import List
@@ -69,9 +72,36 @@ class VectorStore:
             headers=["Chunk_ID", "Page Content", "Source", "Preview"],
             tablefmt="grid"
         ))
+        
             
             
 
         print("=" * 140)
+    
+# ✅ SAVE
+    def save(self, folder):
+        os.makedirs(folder, exist_ok=True)
+        faiss.write_index(self.index, f"{folder}/faiss.index")
+
+        with open(f"{folder}/chunks.pkl", "wb") as f:
+            pickle.dump(self.chunks, f)
+
+        print("[VectorStore] Saved successfully")
+
+    # ✅ LOAD
+    @classmethod
+    def load(cls, folder):
+        index = faiss.read_index(f"{folder}/faiss.index")
+
+        with open(f"{folder}/chunks.pkl", "rb") as f:
+            chunks = pickle.load(f)
+
+        store = cls(index.d)
+        store.index = index
+        store.chunks = chunks
+
+        print("[VectorStore] Loaded from disk")
+        return store
+
 
 

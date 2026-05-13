@@ -15,22 +15,9 @@ class SpeechToText:
             local_files_only=True
         )
       
-    def record_audio(self,duration=10, sample_rate=16000):
-        print("Recording... Speak your question")
+    
 
-        audio = sd.rec(
-            int(duration * sample_rate),
-            samplerate=sample_rate,
-            channels=1,
-            dtype="float32"
-        )
-        sd.wait()
-        print("Recording finished")
-
-        audio_int16 = np.int16(audio / np.max(np.abs(audio)) * 32767)
-        write(AUDIO_PATH, sample_rate, audio_int16)
-
-    def transcribe_audio(self,audio_path=AUDIO_PATH):
+    def transcribe_audio(self,audio_path):
         print("Loading Faster‑Whisper model...")
         segments, info = self.model.transcribe(audio_path, beam_size=5)
         segments = list(segments)

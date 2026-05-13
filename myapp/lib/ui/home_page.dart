@@ -72,8 +72,8 @@ class _HomePageState extends State<HomePage> {
 
                                 return Align(
                                   alignment: message.sender == Sender.user
-                                      ? Alignment.centerLeft
-                                      : Alignment.centerRight,
+                                      ? Alignment.centerRight
+                                      : Alignment.centerLeft,
                                   child: VoiceBubble(
                                     message: message,
                                     player: audioPlayer,
