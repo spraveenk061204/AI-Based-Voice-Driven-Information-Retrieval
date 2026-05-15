@@ -85,8 +85,25 @@ class _VoiceMicState extends State<VoiceMic> with SingleTickerProviderStateMixin
                   } else {
                     setState(() => isRecording = false);
 
+                    await Future.delayed(const Duration(milliseconds: 500)); // ✅ IMPORTANT
                     final path = await recorder.stop();
+
                     if (path == null) return;
+
+// ✅ validate file
+                    final file = File(path);
+                    final size = await file.length();
+                    print("File size: $size");
+                    print("Recorded file path: $path");
+// ✅ ignore bad recordings
+                    if (size < 5000) {
+                      print("Recording too short / silent");
+                      return;
+                    }
+
+
+
+                   // if (path == null) return;
 
                     /// 1️⃣ Add user voice bubble
                     widget.controller.addMessage(

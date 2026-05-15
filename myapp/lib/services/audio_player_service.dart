@@ -12,8 +12,11 @@ class AudioPlayerService {
   Future<void> play(String path) async {
     if (currentPath != path) {
       currentPath = path;
+
+      await _player.stop();   // ✅ VERY IMPORTANT
       await _player.setFilePath(path);
     }
+
     await _player.play();
   }
 

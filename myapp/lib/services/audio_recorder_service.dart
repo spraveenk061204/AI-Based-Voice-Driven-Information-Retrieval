@@ -16,6 +16,7 @@ class AudioRecorderService {
         encoder: AudioEncoder.aacLc,
         bitRate: 128000,
         sampleRate: 44100,
+        numChannels: 1,
       ),
       path: path, // ✅ REQUIRED on Android
     );

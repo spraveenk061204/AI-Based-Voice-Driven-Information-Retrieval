@@ -7,7 +7,8 @@ import 'package:permission_handler/permission_handler.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized(); // ✅ REQUIRED
 
-  await Permission.audio.request(); // ✅ safe now
+
+  await Permission.microphone.request();
 
   runApp(const MaterialApp(
     debugShowCheckedModeBanner: false,

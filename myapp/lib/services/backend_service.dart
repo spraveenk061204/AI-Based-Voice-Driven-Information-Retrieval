@@ -19,7 +19,7 @@ class BackendService {
       await http.MultipartFile.fromPath(
         'audio',
         audioFile.path,
-        contentType: MediaType('audio', 'm4a'),
+        contentType: MediaType('audio', 'wav'),
       ),
     );
 
