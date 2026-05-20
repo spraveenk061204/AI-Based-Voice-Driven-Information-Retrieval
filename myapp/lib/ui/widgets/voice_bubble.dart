@@ -93,81 +93,86 @@ class _VoiceBubbleState extends State<VoiceBubble> {
               /// ✅ YOUR EXISTING BUBBLE (unchanged logic)
               ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 260),
-                child: Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: isUser ? Colors.white10 : Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Row(
-                    children: [
-                      /// ✅ Play / Pause
-                      GestureDetector(
-                        onTap: () async {
-                          if (isPlaying) {
-                            await widget.player.pause();
-                          } else {
-                            await widget.player
-                                .play(widget.message.audioPath);
-                          }
-                        },
-                        child: CircleAvatar(
-                          radius: 18,
-                          backgroundColor:
-                          isUser ? Colors.white : Colors.black,
-                          child: Icon(
-                            isPlaying
-                                ? Icons.pause
-                                : Icons.play_arrow,
-                            color:
-                            isUser ? Colors.black : Colors.white,
+                  child: isUser
+                  /// ✅ USER → TEXT MESSAGE
+                      ? Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.white10,
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Text(
+                      widget.message.text,
+                      style: const TextStyle(color: Colors.white),
+                    ),
+                  )
+
+                  /// ✅ ASSISTANT → AUDIO PLAYER
+                      : Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Row(
+                      children: [
+
+                        /// ▶️ Play / Pause
+                        GestureDetector(
+                          onTap: () async {
+                            if (isPlaying) {
+                              await widget.player.pause();
+                            } else {
+                              await widget.player
+                                  .play(widget.message.audioPath);
+                            }
+                          },
+                          child: CircleAvatar(
+                            radius: 18,
+                            backgroundColor: Colors.black,
+                            child: Icon(
+                              isPlaying
+                                  ? Icons.pause
+                                  : Icons.play_arrow,
+                              color: Colors.white,
+                            ),
                           ),
                         ),
-                      ),
 
-                      const SizedBox(width: 12),
+                        const SizedBox(width: 12),
 
-                      /// ✅ Progress + time
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment:
-                          CrossAxisAlignment.start,
-                          children: [
-                            Slider(
-                              activeColor: isUser
-                                  ? Colors.white
-                                  : Colors.black,
-                              inactiveColor: Colors.grey,
-                              value: _position.inMilliseconds
-                                  .clamp(
-                                  0, _duration.inMilliseconds)
-                                  .toDouble(),
-                              max: _duration.inMilliseconds
-                                  .toDouble(),
-                              onChanged: (value) async {
-                                await widget.player.seek(
-                                  Duration(
-                                    milliseconds: value.toInt(),
-                                  ),
-                                );
-                              },
-                            ),
-
-                            Text(
-                              "${_format(_position)} / ${_format(_duration)}",
-                              style: TextStyle(
-                                color: isUser
-                                    ? Colors.white
-                                    : Colors.black,
-                                fontSize: 12,
+                        /// ✅ Progress + time
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Slider(
+                                activeColor: Colors.black,
+                                inactiveColor: Colors.grey,
+                                value: _position.inMilliseconds
+                                    .clamp(0, _duration.inMilliseconds)
+                                    .toDouble(),
+                                max: _duration.inMilliseconds.toDouble(),
+                                onChanged: (value) async {
+                                  await widget.player.seek(
+                                    Duration(milliseconds: value.toInt()),
+                                  );
+                                },
                               ),
-                            ),
-                          ],
+
+                              Text(
+                                "${_format(_position)} / ${_format(_duration)}",
+                                style: const TextStyle(
+                                  color: Colors.black,
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
               ),
             ],
           ),

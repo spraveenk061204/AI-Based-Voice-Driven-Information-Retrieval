@@ -6,10 +6,11 @@ import 'package:path_provider/path_provider.dart';
 import 'package:http_parser/http_parser.dart';
 
 class BackendService {
-      static const String _endpoint =
-      'http://10.0.2.2:8000/process-audio';
 
-  Future<String> sendAudio(File audioFile) async {
+   // static const String _endpoint ='http://10.0.2.2:8000/process-text';   //Emulator
+  static const String _endpoint = 'http://localhost:8000/process-text';  //Edge
+
+  /*Future<String> sendAudio(File audioFile) async {
     final request = http.MultipartRequest(
       'POST',
       Uri.parse(_endpoint),
@@ -35,9 +36,30 @@ class BackendService {
     final audioUrl = json['audio_url'] as String;
 
     return await _downloadAudio(audioUrl);
-  }
+  }*/
 
-  /// Downloads assistant audio and saves locally
+  /*Future<String> sendText(String text) async {
+        final response = await http.post(
+          Uri.parse(_endpoint),
+          headers: {"Content-Type": "application/json"},
+          body: jsonEncode({"text": text}),
+        );
+
+        if (response.statusCode != 200) {
+          throw Exception('Backend error: ${response.statusCode}');
+        }
+
+        final json = jsonDecode(response.body);
+
+        final audioUrl = json['audio_url'] as String;
+
+        /// ✅ Download assistant audio
+        return await _downloadAudio(audioUrl);
+      }
+
+
+
+      /// Downloads assistant audio and saves locally
   Future<String> _downloadAudio(String url) async {
     final res = await http.get(Uri.parse(url));
     if (res.statusCode != 200) {
@@ -52,5 +74,26 @@ class BackendService {
     final file = File(filePath);
     await file.writeAsBytes(res.bodyBytes);
     return file.path;
+  }*/
+  Future<String> sendText(String text) async {
+    final response = await http.post(
+      Uri.parse(_endpoint),
+      headers: {"Content-Type": "application/json"},
+      body: jsonEncode({"text": text}),
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception('Backend error: ${response.statusCode}');
+    }
+
+    final json = jsonDecode(response.body);
+
+    print("🔥 FULL RESPONSE: $json");
+
+    final audioUrl = json['audio_url'];
+
+    print("🎧 Audio URL: $audioUrl");
+
+    return audioUrl;   // ✅ ✅ RETURN URL DIRECTLY
   }
 }

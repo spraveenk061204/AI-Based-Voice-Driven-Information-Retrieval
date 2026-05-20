@@ -1,10 +1,6 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
-import '../../services/audio_player_service.dart';
-import '../../services/audio_recorder_service.dart';
-import '../../services/backend_service.dart';
-import '../../models/voice_message.dart';
+import 'package:speech_to_text/speech_to_text.dart' as stt;
+
 import '../../state/chat_controller.dart';
 
 class VoiceMic extends StatefulWidget {
@@ -12,42 +8,56 @@ class VoiceMic extends StatefulWidget {
 
   const VoiceMic({super.key, required this.controller});
 
+
   @override
   State<VoiceMic> createState() => _VoiceMicState();
 }
 
-class _VoiceMicState extends State<VoiceMic> with SingleTickerProviderStateMixin {
-  late final AnimationController _controller =
-  AnimationController(vsync: this, duration: const Duration(seconds: 2))
-    ..repeat();
-  final AudioRecorderService recorder = AudioRecorderService();
-  final AudioPlayerService player = AudioPlayerService();
+class _VoiceMicState extends State<VoiceMic>
+    with SingleTickerProviderStateMixin {
 
-  final BackendService backend = BackendService();
+  late final AnimationController _controller =
+  AnimationController(
+    vsync: this,
+    duration: const Duration(seconds: 2),
+  )..repeat();
+
+  final stt.SpeechToText _speech = stt.SpeechToText();
+
   bool isRecording = false;
+  String recognizedText = "";
+  @override
+  void initState() {
+    super.initState();
+
+    _speech.initialize(
+      onStatus: (status) => print("STATUS: $status"),
+      onError: (error) => print("ERROR: ${error.errorMsg}"),
+    );
+  }
+
+
   @override
   void dispose() {
     _controller.dispose();
+    _speech.stop();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return  SizedBox(
-      height: 260, // ✅ HARD MIC ZONE
+    return SizedBox(
+      height: 260,
       child: Column(
         children: [
+
           Text(
             isRecording ? 'Speak now!' : 'Tap to speak!',
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
-            ),
+            style: const TextStyle(color: Colors.white, fontSize: 18),
           ),
+
           const SizedBox(height: 12),
 
-          /// ✅ MIC GLOW CLIPPED
           ClipRect(
             child: SizedBox(
               width: 180,
@@ -55,6 +65,8 @@ class _VoiceMicState extends State<VoiceMic> with SingleTickerProviderStateMixin
               child: Stack(
                 alignment: Alignment.center,
                 children: [
+
+                  /// ✅ Glow animation
                   AnimatedBuilder(
                     animation: _controller,
                     builder: (_, __) {
@@ -65,9 +77,9 @@ class _VoiceMicState extends State<VoiceMic> with SingleTickerProviderStateMixin
                           shape: BoxShape.circle,
                           boxShadow: [
                             BoxShadow(
-                              color: (isRecording
+                              color: isRecording
                                   ? Colors.green
-                                  : Colors.redAccent),
+                                  : Colors.redAccent,
                               blurRadius: 28 * _controller.value,
                               spreadRadius: 12 * _controller.value,
                             ),
@@ -76,80 +88,73 @@ class _VoiceMicState extends State<VoiceMic> with SingleTickerProviderStateMixin
                       );
                     },
                   ),
-              GestureDetector(
 
-                onTap: () async {
-                  if (!isRecording) {
-                    setState(() => isRecording = true);
-                    await recorder.start();
-                  } else {
-                    setState(() => isRecording = false);
+                  /// ✅ MIC BUTTON
+                  GestureDetector(
+                    onTap: () async {
 
-                    await Future.delayed(const Duration(milliseconds: 500)); // ✅ IMPORTANT
-                    final path = await recorder.stop();
+                      /// ✅ START LISTENING
+                      if (!isRecording) {
 
-                    if (path == null) return;
+                        // ✅ Reset speech engine
+                        if (_speech.isListening) {
+                          await _speech.stop();
+                        }
 
-// ✅ validate file
-                    final file = File(path);
-                    final size = await file.length();
-                    print("File size: $size");
-                    print("Recorded file path: $path");
-// ✅ ignore bad recordings
-                    if (size < 5000) {
-                      print("Recording too short / silent");
-                      return;
-                    }
+                        await Future.delayed(const Duration(milliseconds: 200));
 
+                        setState(() {
+                          isRecording = true;
+                          recognizedText = "";
+                        });
 
+                        await _speech.listen(
+                          listenMode: stt.ListenMode.dictation,
+                          partialResults: true,
+                          localeId: "en-US",   // ✅ IMPORTANT FIX
 
-                   // if (path == null) return;
+                          onResult: (result) {
+                            print("RESULT: ${result.recognizedWords}");
 
-                    /// 1️⃣ Add user voice bubble
-                    widget.controller.addMessage(
-                      VoiceMessage(
-                        audioPath: path,
-                        duration: const Duration(seconds: 5),
-                        sender: Sender.user,
+                            if (result.recognizedWords.isNotEmpty) {
+                              recognizedText = result.recognizedWords;
+
+                              widget.controller.queryController.text = recognizedText;
+                            }
+                          },
+                        );
+                      }
+
+                      /// ✅ STOP LISTENING
+                      else {
+                        setState(() => isRecording = false);
+
+                        await _speech.stop();
+
+                        print("✅ FINAL TEXT: $recognizedText");
+                      }
+                    },
+
+                    child: Container(
+                      width: 96,
+                      height: 96,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: RadialGradient(
+                          colors: isRecording
+                              ? [Colors.greenAccent, Colors.green]
+                              : [Colors.redAccent, Colors.deepOrangeAccent],
+                        ),
                       ),
-                    );
-
-                    /// 2️⃣ Send to backend
-
-                    final responsePath = await backend.sendAudio(File(path));
-
-                    /// ✅ Add assistant message FIRST
-                    widget.controller.addMessage(
-                      VoiceMessage(
-                        audioPath: responsePath,
-                        duration: const Duration(seconds: 5),
-                        sender: Sender.assistant,
+                      child: Icon(
+                        isRecording
+                            ? Icons.mic
+                            : Icons.mic_none,
+                        size: 42,
+                        color: Colors.white,
                       ),
-                    );
-
-                    /// ✅ THEN play audio automatically
-                    await player.play(responsePath);
-
-                  }
-                },
-                child: Container(
-                  width: 96,
-                  height: 96,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    gradient: RadialGradient(
-                      colors: isRecording
-                          ? [Colors.greenAccent, Colors.green]
-                          : [Colors.redAccent, Colors.deepOrangeAccent],
                     ),
                   ),
-                  child: Icon(
-                    isRecording ? Icons.mic : Icons.mic_none,
-                    size: 42,
-                    color: Colors.white,
-                  ),
-                ),
-              ),
                 ],
               ),
             ),
@@ -157,7 +162,5 @@ class _VoiceMicState extends State<VoiceMic> with SingleTickerProviderStateMixin
         ],
       ),
     );
-
-
   }
 }
