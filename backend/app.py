@@ -63,27 +63,27 @@ async def process_text(req: Request):
     prompt = build_rag_prompt(retrieved_data,text)
     answer = llm.generate(prompt)
     print(answer)
-    tts=TextToSpeech(r"C:\Users\s.praveenk\Documents\Projects\Poc-AI Based Voice retrieval\models\bark-small")
+    #tts=TextToSpeech(r"C:\Users\s.praveenk\Documents\Projects\Poc-AI Based Voice retrieval\models\bark-small")
    
-    output_filename = "response.wav"
-    audio_path = os.path.join(OUTPUT_DIR, output_filename)
+    #output_filename = "response.wav"
+    #audio_path = os.path.join(OUTPUT_DIR, output_filename)
     
    
-    tts.synthesize(answer, audio_path)
+    #tts.synthesize(answer, audio_path)
 
-    print("Audio saved at:", audio_path)
+    #print("Audio saved at:", audio_path)
 
     return JSONResponse({
-        "audio_url": f"http://localhost:8000/audio/{output_filename}",
+        #"audio_url": f"http://localhost:8000/audio/{output_filename}",
         "text": answer
     })
 
 
 
-@app.get("/audio/{filename}")
+'''@app.get("/audio/{filename}")
 def get_audio(filename: str):
     return FileResponse(os.path.join(OUTPUT_DIR, filename))
-
+'''
 
 
 
