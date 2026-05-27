@@ -21,7 +21,9 @@ dependencies:
   http_parser: ^4.0.2
   permission_handler: ^11.3.1
   speech_to_text: ^7.3.0
-  vosk_flutter: ^0.3.48
+  flutter_tts: ^3.8.5
+  file_picker: ^11.0.2
+  flutter_launcher_icons: ^0.14.4
 
 flutter:
   uses-material-design: true

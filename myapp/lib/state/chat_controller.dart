@@ -17,6 +17,9 @@ class ChatController extends ChangeNotifier {
       messages.removeLast();
       notifyListeners();
     }
+
+
   }
+  Function(String text)? onAutoSend;
 
 }

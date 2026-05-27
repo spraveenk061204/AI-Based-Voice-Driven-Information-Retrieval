@@ -4,11 +4,20 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
 import 'package:http_parser/http_parser.dart';
+import 'package:flutter/foundation.dart';
 
 class BackendService {
 
    // static const String _endpoint ='http://10.0.2.2:8000/process-text';   //Emulator
-  static const String _endpoint = 'http://localhost:8000/process-text';  //Edge
+
+  static String get _endpoint {
+    if (kIsWeb) {
+      return "http://localhost:8000/process-text";   // ✅ WEB
+    } else {
+      return "http://10.0.2.2:8000/process-text";    // ✅ ANDROID EMULATOR
+    }
+  }
+
 
   /*Future<String> sendAudio(File audioFile) async {
     final request = http.MultipartRequest(
@@ -90,10 +99,10 @@ class BackendService {
 
     print("🔥 FULL RESPONSE: $json");
 
-    final audioUrl = json['audio_url'];
+    final llm_text = json['text'];
 
-    print("🎧 Audio URL: $audioUrl");
+    print("🎧 Text from backend: $text");
 
-    return audioUrl;   // ✅ ✅ RETURN URL DIRECTLY
+    return llm_text;   // ✅ ✅ RETURN URL DIRECTLY
   }
 }

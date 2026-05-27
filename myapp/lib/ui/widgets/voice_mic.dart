@@ -113,15 +113,17 @@ class _VoiceMicState extends State<VoiceMic>
                           partialResults: true,
                           localeId: "en-US",   // ✅ IMPORTANT FIX
 
-                          onResult: (result) {
-                            print("RESULT: ${result.recognizedWords}");
+                            onResult: (result) {
+                              print("RESULT: ${result.recognizedWords}");
 
-                            if (result.recognizedWords.isNotEmpty) {
-                              recognizedText = result.recognizedWords;
+                              if (result.recognizedWords.isNotEmpty) {
+                                setState(() {   // ✅ ✅ THIS FIXES LIVE UPDATE
+                                  recognizedText = result.recognizedWords;
 
-                              widget.controller.queryController.text = recognizedText;
-                            }
-                          },
+                                  widget.controller.queryController.text = recognizedText;
+                                });
+                              }
+                            },
                         );
                       }
 
@@ -132,6 +134,15 @@ class _VoiceMicState extends State<VoiceMic>
                         await _speech.stop();
 
                         print("✅ FINAL TEXT: $recognizedText");
+
+                        /// ✅ ✅ AUTO SEND AFTER STOP
+                        if (recognizedText.isNotEmpty) {
+
+                          widget.controller.queryController.text = recognizedText;
+
+                          /// ✅ CALL SEND FUNCTION
+                          widget.controller.onAutoSend?.call(recognizedText);
+                        }
                       }
                     },
 

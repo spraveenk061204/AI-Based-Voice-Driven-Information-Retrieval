@@ -1,3 +1,5 @@
+
+
 from sentence_transformers import SentenceTransformer
 from typing import List
 MODEL_PATH=r"C:\Users\s.praveenk\Documents\Projects\Poc-AI Based Voice retrieval\all-mini-lm-v6"
