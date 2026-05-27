@@ -1,36 +1,40 @@
-def build_rag_prompt(context_chunks, user_query):
+def build_rag_prompt(context_chunks, user_query, history):
+
     context_text = "\n\n".join(
         chunk.page_content for chunk in context_chunks
     )
 
+    # ✅ Keep only last few messages (VERY IMPORTANT)
+    history = history[-6:]
+
+    conversation = ""
+    for msg in history[:-1]:   # ❗ exclude latest question
+        if msg["role"] == "user":
+            conversation += f"User: {msg['content']}\n"
+        else:
+            conversation += f"Assistant: {msg['content']}\n"
+
     prompt = f"""
-You are a helpful technical assistant.
-Use ONLY the information provided below.
-If the answer is not present, say "I don't know".
+You are a helpful assistant.
 
-
-Rules:
-- Add welcome message like "Hello! How can I assist you today?" when user says "Hey Assistant".
-- Use the provided context to answer the question.
-- Keep the answer BRIEF
-- If the answer is like instructions, steps, or a list, format it as a bullet list.
-- Do NOT give long explanations
-- If you don't know the answer, say "I don't know"
-- Be clear and direct
-- Answer ONLY the question
-- Do NOT repeat the entire context
-- Do NOT include "Question" or "Answer"
-- Provide a short answer (2–3 lines)
-- If steps are needed, provide only the final steps
-
-
+STRICT RULES:
+- Use only the provided context
+- Answer ONLY the latest question
+- Do NOT repeat conversation
+- Do NOT include 'User' or 'Assistant'
+- Do NOT include 'Answer:' or any labels
+- Keep answer short (2–3 lines OR bullet points)
 
 Context:
 {context_text}
 
-Question:
+Conversation (for reference only):
+{conversation}
+
+User Question:
 {user_query}
 
-Answer:
+Final Answer:
 """
+
     return prompt.strip()

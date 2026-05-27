@@ -81,8 +81,9 @@ class RAGpipeline:
         documents.extend(web_docs)
 
         chunks = self.chunker.chunk_documents(documents)
+        self.chunker.print_chunks_table_pretty(chunks)
         embeddings = self.embedder.embed_chunks(chunks)
-
+        self.embedder.print_embeddings_table(chunks, embeddings)
         vector_store = VectorStore(len(embeddings[0]))
         vector_store.add_embeddings(embeddings, chunks)
 

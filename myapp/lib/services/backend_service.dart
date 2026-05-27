@@ -6,17 +6,21 @@ import 'package:path_provider/path_provider.dart';
 import 'package:http_parser/http_parser.dart';
 import 'package:flutter/foundation.dart';
 
+import '../models/chat_session.dart';
+
 class BackendService {
 
    // static const String _endpoint ='http://10.0.2.2:8000/process-text';   //Emulator
 
-  static String get _endpoint {
+
+  static String get baseUrl {
     if (kIsWeb) {
-      return "http://localhost:8000/process-text";   // ✅ WEB
+      return "http://localhost:8000";
     } else {
-      return "http://10.0.2.2:8000/process-text";    // ✅ ANDROID EMULATOR
+      return "http://10.0.2.2:8000";
     }
   }
+
 
 
   /*Future<String> sendAudio(File audioFile) async {
@@ -84,11 +88,11 @@ class BackendService {
     await file.writeAsBytes(res.bodyBytes);
     return file.path;
   }*/
-  Future<String> sendText(String text) async {
+  Future<String> sendText(String text,String chatID) async {
     final response = await http.post(
-      Uri.parse(_endpoint),
+      Uri.parse("$baseUrl/process-text"),
       headers: {"Content-Type": "application/json"},
-      body: jsonEncode({"text": text}),
+      body: jsonEncode({"text": text,"chat_id":chatID}),
     );
 
     if (response.statusCode != 200) {
@@ -97,7 +101,7 @@ class BackendService {
 
     final json = jsonDecode(response.body);
 
-    print("🔥 FULL RESPONSE: $json");
+    print("FULL RESPONSE: $json");
 
     final llm_text = json['text'];
 
@@ -105,4 +109,30 @@ class BackendService {
 
     return llm_text;   // ✅ ✅ RETURN URL DIRECTLY
   }
+  Future<List<ChatSession>> getChats() async {
+    final res = await http.get(Uri.parse("$baseUrl/get-chats"));
+    final data = jsonDecode(res.body);
+
+    return data["chats"].map<ChatSession>((e) {
+      return ChatSession(
+        id: e["chat_id"],
+        title: e["title"],
+      );
+    }).toList();
+  }
+  /// ✅ GET MESSAGES FOR A CHAT
+  Future<List<dynamic>> getChatMessages(String chatId) async {
+    final res = await http.get(
+      Uri.parse("$baseUrl/get-chat/$chatId"),
+    );
+
+    if (res.statusCode != 200) {
+      return []; // ✅ avoid crash
+    }
+
+    final data = jsonDecode(res.body);
+
+    return data["messages"] ?? [];
+  }
+
 }
