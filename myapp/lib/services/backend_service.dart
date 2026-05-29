@@ -134,5 +134,28 @@ class BackendService {
 
     return data["messages"] ?? [];
   }
+  /// ✅ RENAME CHAT
+  Future<void> renameChat(String chatId, String newTitle) async {
+    final res = await http.put(
+      Uri.parse("$baseUrl/rename-chat/$chatId"),
+      headers: {"Content-Type": "application/json"},
+      body: jsonEncode({"title": newTitle}),
+    );
+
+    if (res.statusCode != 200) {
+      throw Exception("Rename failed");
+    }
+  }
+
+  /// ✅ DELETE CHAT
+  Future<void> deleteChat(String chatId) async {
+    final res = await http.delete(
+      Uri.parse("$baseUrl/delete-chat/$chatId"),
+    );
+
+    if (res.statusCode != 200) {
+      throw Exception("Delete failed");
+    }
+  }
 
 }

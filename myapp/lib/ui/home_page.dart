@@ -6,6 +6,7 @@ import 'package:myapp/state/chat_controller.dart';
 import 'package:myapp/services/backend_service.dart';
 import 'package:speech_to_text/speech_to_text.dart';
 
+import '../models/chat_session.dart';
 import '../models/voice_message.dart';
 
 class HomePage extends StatefulWidget {
@@ -20,11 +21,15 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   final FlutterTts tts = FlutterTts();
   final SpeechToText speechToText = SpeechToText();
   bool isListening = false;
+  bool isLoading = false;
   final BackendService backend = BackendService();
   String chatId = DateTime.now().millisecondsSinceEpoch.toString();
+
+
   Future<void> handleSend(String text) async {
 
     if (text.trim().isEmpty) return;
+    setState(() => isLoading = true);
 
     /// ✅ USER MESSAGE
     chatController.addMessage(
@@ -46,23 +51,32 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
       ),
     );
 
-    /// ✅ BACKEND
-    final answerText = await backend.sendText(text,chatId);
 
-    chatController.removeLastMessage();
+    try {
+      final answerText =
+      await backend.sendText(text, chatId);
 
-    /// ✅ SHOW RESULT
-    chatController.addMessage(
-      VoiceMessage(
-        text: answerText,
-        sender: Sender.assistant,
-        duration: Duration.zero,
-      ),
-    );
+      if (!isLoading) return;   // ✅ IF STOPPED → ignore response
 
-    /// ✅ SPEAK
-    await tts.stop();
-    await tts.speak(answerText);
+      chatController.removeLastMessage();
+
+      chatController.addMessage(
+        VoiceMessage(
+          text: answerText,
+          sender: Sender.assistant,
+          duration: Duration.zero,
+        ),
+      );
+
+      await tts.stop();
+      await tts.speak(answerText);
+
+    } catch (e) {
+      print("Error: $e");
+    }
+
+    setState(() => isLoading = false);   // ✅ STOP LOADING
+
   }
   @override
   void initState() {
@@ -91,7 +105,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                 style: TextStyle(color: Colors.white)),
             onTap: () {
 
-              chatId = DateTime.now().millisecondsSinceEpoch.toString(); // ✅ NEW ID
+              chatId = DateTime.now().millisecondsSinceEpoch.toString();
 
               chatController.createNewChat();
 
@@ -101,7 +115,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
 
           const Divider(color: Colors.white24),
 
-          /// ✅ CHAT LIST
+
           Expanded(
             child: AnimatedBuilder(
               animation: chatController,
@@ -111,40 +125,85 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                   itemBuilder: (context, index) {
 
                     final chat = chatController.chats[index];
-
-                    return ListTile(
-                      title: Text(
-                        chat.title,
-                        style: const TextStyle(color: Colors.white),
-                      ),
-
-                      selected:
-                      chat.id == chatController.activeChatId,
-
-                      onTap: () async {
-
-                        chatController.switchChat(chat.id);
-                        chatId = chat.id;   // ✅ ✅ CRITICAL FIX
+                    bool isHovering = false;
+                    return StatefulBuilder(
+                      builder: (context, setItemState) {
 
 
-                        final msgs =
-                        await backend.getChatMessages(chat.id);
 
-                        chatController.setMessages(
-                          msgs.map((m) {
-                            return VoiceMessage(
-                              text: m["content"],
-                              sender: m["role"] == "user"
-                                  ? Sender.user
-                                  : Sender.assistant,
-                              duration: Duration.zero,
-                            );
-                          }).toList(),
+                        return MouseRegion(
+                          onEnter: (_) => setItemState(() => isHovering = true),
+                          onExit: (_) => setItemState(() => isHovering = false),
+
+                          child: ListTile(
+                            title: Text(
+                              chat.title,
+                              style: const TextStyle(color: Colors.white),
+                            ),
+
+                            selected: chat.id == chatController.activeChatId,
+
+                            /// ✅ SHOW ICONS ONLY ON HOVER
+                            trailing: isHovering
+                                ? Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+
+                                /// ✏️ RENAME
+                                IconButton(
+                                  icon: const Icon(
+                                    Icons.edit,
+                                    size: 18,
+                                    color: Colors.white70,
+                                  ),
+                                  onPressed: () {
+                                    showRenameDialog(chat);
+                                  },
+                                ),
+
+                                /// 🗑️ DELETE
+                                IconButton(
+                                  icon: const Icon(
+                                    Icons.delete,
+                                    size: 18,
+                                    color: Colors.red,
+                                  ),
+                                  onPressed: () {
+                                    showDeleteDialog(chat);
+                                  },
+                                ),
+                              ],
+                            )
+                                : null,
+
+                            /// ✅ OPTIONAL HOVER HIGHLIGHT
+                            tileColor: isHovering ? Colors.white10 : null,
+
+                            onTap: () async {
+                              chatController.switchChat(chat.id);
+                              chatId = chat.id;
+
+                              final msgs = await backend.getChatMessages(chat.id);
+
+                              chatController.setMessages(
+                                msgs.map((m) {
+                                  return VoiceMessage(
+                                    text: m["content"],
+                                    sender: m["role"] == "user"
+                                        ? Sender.user
+                                        : Sender.assistant,
+                                    duration: Duration.zero,
+                                  );
+                                }).toList(),
+                              );
+
+                              Navigator.pop(context);
+                            },
+                          ),
                         );
-
-                        Navigator.pop(context);
                       },
                     );
+
                   },
                 );
               },
@@ -202,7 +261,6 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                     children: [
 
                       const SizedBox(height: 12),
-                      /// ✅ CHAT LIST
                       Expanded(
                         child: AnimatedBuilder(
                           animation: chatController,
@@ -338,7 +396,13 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                     /// ✅ SEND BUTTON
                     GestureDetector(
                       onTap: () {
-                        handleSend(chatController.queryController.text);
+
+                        if (isLoading) {
+                          stopResponse();   // ✅ STOP
+                        } else {
+                          handleSend(chatController.queryController.text);
+                        }
+
                       },
                       child: Container(
                         padding: const EdgeInsets.all(12),
@@ -347,7 +411,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                           borderRadius:
                           BorderRadius.circular(12),
                         ),
-                        child: const Icon(Icons.send,
+                        child: Icon( isLoading ? Icons.stop : Icons.send,   // ✅ toggle
                             color: Colors.white),
                       ),
                     ),
@@ -368,7 +432,129 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     final chats = await backend.getChats();
     chatController.setChats(chats); // ✅ IMPORTANT
   }
+  void stopResponse() {
+    setState(() => isLoading = false);
 
+    /// ✅ remove loading bubble
+    chatController.removeLastMessage();
+
+    /// ✅ stop TTS
+    tts.stop();
+  }
+  void showRenameDialog(dynamic chat) {
+    TextEditingController controller =
+    TextEditingController(text: chat.title);
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          backgroundColor: Colors.black87,
+
+          title: const Text(
+            "Rename Chat",
+            style: TextStyle(color: Colors.white),
+          ),
+
+          content: TextField(
+            controller: controller,
+            style: const TextStyle(color: Colors.white),
+            decoration: const InputDecoration(
+              hintText: "Enter new title",
+              hintStyle: TextStyle(color: Colors.white54),
+            ),
+          ),
+
+          actions: [
+
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text("Cancel"),
+            ),
+
+            TextButton(
+              onPressed: () async {
+
+                final newTitle = controller.text.trim();
+                if (newTitle.isEmpty) return;
+
+                /// ✅ CALL BACKEND
+                await backend.renameChat(chat.id, newTitle);
+
+                /// ✅ UPDATE UI
+                int index = chatController.chats
+                    .indexWhere((c) => c.id == chat.id);
+
+                if (index != -1) {
+                  chatController.chats[index] =
+                      ChatSession(id: chat.id, title: newTitle);
+
+                  chatController.notifyListeners();
+                }
+
+                Navigator.pop(context);
+              },
+              child: const Text("Save"),
+            ),
+          ],
+        );
+      },
+    );
+  }
+  void showDeleteDialog(dynamic chat) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          backgroundColor: Colors.black87,
+
+          title: const Text(
+            "Delete Chat?",
+            style: TextStyle(color: Colors.white),
+          ),
+
+          content: const Text(
+            "This action cannot be undone.",
+            style: TextStyle(color: Colors.white70),
+          ),
+
+          actions: [
+
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text("Cancel"),
+            ),
+
+            TextButton(
+              onPressed: () async {
+
+                /// ✅ DELETE FROM BACKEND
+                await backend.deleteChat(chat.id);
+
+                /// ✅ REMOVE FROM UI
+                chatController.chats.removeWhere(
+                        (c) => c.id == chat.id);
+
+                /// ✅ HANDLE ACTIVE CHAT
+                if (chatController.activeChatId == chat.id) {
+                  chatController.createNewChat();
+                  chatId = chatController.activeChatId!;
+                }
+
+                chatController.notifyListeners();
+
+                Navigator.pop(context);
+              },
+              child: const Text(
+                "Delete",
+                style: TextStyle(color: Colors.red),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
 
 }
 
