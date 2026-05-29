@@ -122,3 +122,24 @@ def get_chat(chat_id: str):
     if not chat:
         return JSONResponse(status_code=404, content={"message": "Chat not found"})
     return {"chat_id": chat["_id"], "messages": chat["messages"]}
+
+
+@app.put("/rename-chat/{chat_id}")
+async def rename_chat(chat_id: str, req: Request):
+
+    data = await req.json()
+    new_title = data.get("title", "")
+
+    chat_collection.update_one(
+        {"_id": chat_id},
+        {"$set": {"title": new_title}}
+    )
+
+    return {"status": "success"}
+
+@app.delete("/delete-chat/{chat_id}")
+async def delete_chat(chat_id: str):
+
+    chat_collection.delete_one({"_id": chat_id})
+
+    return {"status": "deleted"}
