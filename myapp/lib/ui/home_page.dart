@@ -31,7 +31,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     if (text.trim().isEmpty) return;
     setState(() => isLoading = true);
 
-    /// ✅ USER MESSAGE
+    /// USER MESSAGE
     chatController.addMessage(
       VoiceMessage(
         text: text,
@@ -42,7 +42,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
 
     chatController.queryController.clear();
 
-    /// ✅ LOADING
+    ///  LOADING
     chatController.addMessage(
       VoiceMessage(
         isLoading: true,
@@ -56,7 +56,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
       final answerText =
       await backend.sendText(text, chatId);
 
-      if (!isLoading) return;   // ✅ IF STOPPED → ignore response
+      if (!isLoading) return;   //  IF STOPPED → ignore response
 
       chatController.removeLastMessage();
 
@@ -75,7 +75,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
       print("Error: $e");
     }
 
-    setState(() => isLoading = false);   // ✅ STOP LOADING
+    setState(() => isLoading = false);   //  STOP LOADING
 
   }
   @override
@@ -85,7 +85,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     loadChats();
     tts.setLanguage("en-US");
     tts.setPitch(1.1);
-    tts.setSpeechRate(0.55);
+    tts.setSpeechRate(1.0);
     chatController.onAutoSend = handleSend;
   }
 
@@ -98,7 +98,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
 
           const SizedBox(height: 40),
 
-          /// ✅ NEW CHAT
+          ///NEW CHAT
           ListTile(
             leading: const Icon(Icons.add, color: Colors.white),
             title: const Text("New Chat",
@@ -143,13 +143,13 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
 
                             selected: chat.id == chatController.activeChatId,
 
-                            /// ✅ SHOW ICONS ONLY ON HOVER
+                            ///  SHOW ICONS ONLY ON HOVER
                             trailing: isHovering
                                 ? Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
 
-                                /// ✏️ RENAME
+                                ///  RENAME
                                 IconButton(
                                   icon: const Icon(
                                     Icons.edit,
@@ -176,7 +176,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                             )
                                 : null,
 
-                            /// ✅ OPTIONAL HOVER HIGHLIGHT
+                            ///  OPTIONAL HOVER HIGHLIGHT
                             tileColor: isHovering ? Colors.white10 : null,
 
                             onTap: () async {
@@ -232,7 +232,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
         ),
 
         title: const Text(
-          'AI-Based Voice Information Retrieval',
+          'AI-Based Voice Driven Information Retrieval',
           style: TextStyle(color: Colors.white,fontSize: 18),
 
         ),
@@ -329,7 +329,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
 
               ),
               const SizedBox(height: 16),
-              /// ✅ QUERY BOX
+              ///  QUERY BOX
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 12),
                 child: Row(
@@ -353,7 +353,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                             suffixIcon: GestureDetector(
                               onTap: () async {
 
-                                /// ✅ START LISTENING
+                                ///  START LISTENING
                                 if (!isListening) {
 
                                   bool available = await speechToText.initialize();
@@ -372,7 +372,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                                   }
                                 }
 
-                                /// ✅ STOP LISTENING
+                                ///  STOP LISTENING
                                 else {
                                   await speechToText.stop();
                                   setState(() => isListening = false);
@@ -393,12 +393,12 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
 
                     const SizedBox(width: 8),
 
-                    /// ✅ SEND BUTTON
+                    /// SEND BUTTON
                     GestureDetector(
                       onTap: () {
 
                         if (isLoading) {
-                          stopResponse();   // ✅ STOP
+                          stopResponse();   // STOP
                         } else {
                           handleSend(chatController.queryController.text);
                         }
@@ -411,7 +411,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                           borderRadius:
                           BorderRadius.circular(12),
                         ),
-                        child: Icon( isLoading ? Icons.stop : Icons.send,   // ✅ toggle
+                        child: Icon( isLoading ? Icons.stop : Icons.send,   // toggle
                             color: Colors.white),
                       ),
                     ),
@@ -430,15 +430,15 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   }
   Future<void> loadChats() async {
     final chats = await backend.getChats();
-    chatController.setChats(chats); // ✅ IMPORTANT
+    chatController.setChats(chats); //  IMPORTANT
   }
   void stopResponse() {
     setState(() => isLoading = false);
 
-    /// ✅ remove loading bubble
+    /// remove loading bubble
     chatController.removeLastMessage();
 
-    /// ✅ stop TTS
+    ///  stop TTS
     tts.stop();
   }
   void showRenameDialog(dynamic chat) {
@@ -478,10 +478,10 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                 final newTitle = controller.text.trim();
                 if (newTitle.isEmpty) return;
 
-                /// ✅ CALL BACKEND
+                /// CALL BACKEND
                 await backend.renameChat(chat.id, newTitle);
 
-                /// ✅ UPDATE UI
+                ///  UPDATE UI
                 int index = chatController.chats
                     .indexWhere((c) => c.id == chat.id);
 
@@ -528,14 +528,14 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
             TextButton(
               onPressed: () async {
 
-                /// ✅ DELETE FROM BACKEND
+                /// DELETE FROM BACKEND
                 await backend.deleteChat(chat.id);
 
-                /// ✅ REMOVE FROM UI
+                /// REMOVE FROM UI
                 chatController.chats.removeWhere(
                         (c) => c.id == chat.id);
 
-                /// ✅ HANDLE ACTIVE CHAT
+                /// HANDLE ACTIVE CHAT
                 if (chatController.activeChatId == chat.id) {
                   chatController.createNewChat();
                   chatId = chatController.activeChatId!;
